@@ -1,0 +1,96 @@
+// Biblioteki
+#include <LiquidCrystal.h>
+
+//**************** konfiguracja ************************
+//
+static int Przycisk_up = A5;
+static int Przycisk_set = A4;
+static int Przycisk_down = A3;
+static int Twew = A0;
+static int Tzew = A1;
+static int Wentylator = 13;
+static int Pompa_Paliwa = 12;
+static int Swieca = 11;
+static int Led_Praca = 10;
+static int Led_Awaria = 9;
+float temperatura_setpoint_pieca = 21.00;                       // C*10 temperatura nastawa pieca (wylaczenie nadmuchu, wyĹaczenie flagi rozruch)
+
+//
+//************** koniec konfiguracji********************
+
+
+
+//**************** konfiguracja LCD ************************
+//
+
+LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
+byte stopnie[8] = {                //konfigurajca znaku stopnie
+      0b00100,
+  0b01010,
+  0b00100,
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000,
+  0b00000
+};
+//
+//************** koniec konfiguracji LCD********************
+void pomiar_temp(){
+  static int twew = analogRead(Twew);
+  static int tzew = analogRead(Tzew);
+  float  Twew = twew * 500.0 / 1023.0;
+  float  Tzew = tzew * 500.0 / 1023.0;
+  lcd.setCursor(1,0);
+  lcd.print("T.Wew:");
+       lcd.setCursor(8,0);
+  lcd.print(Twew);
+    lcd.print((char)0);            //wyĹwietl znak o numerze 0
+  lcd.print("C");
+    lcd.setCursor(1,1);
+    lcd.print("T.Zew: ");
+  lcd.setCursor(8,1);
+  lcd.print(Tzew);
+    lcd.print((char)0);            //wyĹwietl znak o numerze 0
+  lcd.print("C");
+  delay(3000);
+  lcd.clear();
+    
+   
+  lcd.setCursor(1,0);
+    lcd.print("T.Zad: ");
+   lcd.setCursor(8,0);
+  lcd.print(temperatura_setpoint_pieca);
+    lcd.print((char)0);            //wyĹwietl znak o numerze 0
+  lcd.print("C");
+  delay(3000);
+}
+void setup() {
+  pinMode(Przycisk_up,INPUT_PULLUP);
+  pinMode(Przycisk_set,INPUT_PULLUP);
+  pinMode(Przycisk_down,INPUT_PULLUP);
+  pinMode(Wentylator, OUTPUT);
+  pinMode(Pompa_Paliwa, OUTPUT);
+  pinMode(Swieca, OUTPUT);
+  pinMode(Led_Praca, OUTPUT);
+  pinMode(Led_Awaria, OUTPUT);
+  
+  Serial.begin(9600);
+    lcd.createChar(0,stopnie);     //stwĂłrz znak o nazwie stopnie i przypisz jej numer 0
+
+  lcd.begin(16, 2);
+  lcd.print("Sterownik  Pieca");
+         delay (2000);
+  lcd.clear();
+  
+
+    
+
+  
+    }
+
+//petla glowna
+void loop() {  
+
+  pomiar_temp();
+}
