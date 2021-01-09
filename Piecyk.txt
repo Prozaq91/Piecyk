@@ -1,96 +1,148 @@
-// Biblioteki
+// biblioteki
 #include <LiquidCrystal.h>
 
-//**************** konfiguracja ************************
-//
-static int Przycisk_up = A5;
-static int Przycisk_set = A4;
-static int Przycisk_down = A3;
-static int Twew = A0;
-static int Tzew = A1;
-static int Wentylator = 13;
-static int Pompa_Paliwa = 12;
-static int Swieca = 11;
-static int Led_Praca = 10;
-static int Led_Awaria = 9;
-float temperatura_setpoint_pieca = 21.00;                       // C*10 temperatura nastawa pieca (wylaczenie nadmuchu, wyĹaczenie flagi rozruch)
+//wejscia wyjscia
 
-//
-//************** koniec konfiguracji********************
+int Pin_Wentylator = 13;
+int Pin_Pompa = 12;
+int Pin_Swieca = 11;
+int Pin_p_up= 8;
+int Pin_p_down= 9;
+int Pin_t_wew=A0;
+int Pin_t_zew=A1;
+int Pin_t_piec=A2;
+
+//konfiguracja wartosci pieca
+
+float temp_set=20; // Setpoint Pieca
 
 
+//zmienne pomocnicze
 
-//**************** konfiguracja LCD ************************
-//
+int T1; // T1 - odczyt T1 (Temp.Wew) z analogRead(Pin_t_wew)
+int T2; // T2 - odczyt T2 (Temp.Zew) z analogRead(Pin_t_zew)
+int T3; // T3 - odczyt T3 (Temp.Piec) z analogRead(Pin_t_piec)
+int p_up;	
+int p_down;
+float temp_wew;
+float temp_zew;
+float temp_piec;
+float V_T1;
+float V_T2;
+float V_T3;
+float mV_T1;
+float mV_T2;
+float mV_T3;
 
-LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
+//konfiguracja LCD
+
+const int rs = 7, en = 6, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 byte stopnie[8] = {                //konfigurajca znaku stopnie
-      0b00100,
-  0b01010,
-  0b00100,
-  0b00000,
-  0b00000,
-  0b00000,
-  0b00000,
-  0b00000
+  		0b00100,
+	0b01010,
+	0b00100,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000,
+	0b00000
 };
-//
-//************** koniec konfiguracji LCD********************
-void pomiar_temp(){
-  static int twew = analogRead(Twew);
-  static int tzew = analogRead(Tzew);
-  float  Twew = twew * 500.0 / 1023.0;
-  float  Tzew = tzew * 500.0 / 1023.0;
-  lcd.setCursor(1,0);
-  lcd.print("T.Wew:");
-       lcd.setCursor(8,0);
-  lcd.print(Twew);
-    lcd.print((char)0);            //wyĹwietl znak o numerze 0
-  lcd.print("C");
-    lcd.setCursor(1,1);
-    lcd.print("T.Zew: ");
-  lcd.setCursor(8,1);
-  lcd.print(Tzew);
-    lcd.print((char)0);            //wyĹwietl znak o numerze 0
-  lcd.print("C");
-  delay(3000);
-  lcd.clear();
-    
-   
-  lcd.setCursor(1,0);
-    lcd.print("T.Zad: ");
-   lcd.setCursor(8,0);
-  lcd.print(temperatura_setpoint_pieca);
-    lcd.print((char)0);            //wyĹwietl znak o numerze 0
-  lcd.print("C");
-  delay(3000);
-}
-void setup() {
-  pinMode(Przycisk_up,INPUT_PULLUP);
-  pinMode(Przycisk_set,INPUT_PULLUP);
-  pinMode(Przycisk_down,INPUT_PULLUP);
-  pinMode(Wentylator, OUTPUT);
-  pinMode(Pompa_Paliwa, OUTPUT);
-  pinMode(Swieca, OUTPUT);
-  pinMode(Led_Praca, OUTPUT);
-  pinMode(Led_Awaria, OUTPUT);
-  
-  Serial.begin(9600);
-    lcd.createChar(0,stopnie);     //stwĂłrz znak o nazwie stopnie i przypisz jej numer 0
+//////PROGRAM//////
 
+void setup()
+{
+  pinMode(Pin_Wentylator, OUTPUT);
+  pinMode(Pin_Pompa, OUTPUT);
+  pinMode(Pin_Swieca, OUTPUT);
+  pinMode(Pin_p_up, INPUT);
+  pinMode(Pin_p_down, INPUT);
+  
+  lcd.createChar(0,stopnie); //stwórz znak o nazwie stopnie i przypisz jej numer 0
   lcd.begin(16, 2);
-  lcd.print("Sterownik  Pieca");
-         delay (2000);
-  lcd.clear();
-  
+  lcd.print("Sterownik Pieca");
+    lcd.setCursor(2,1);
+  lcd.print("Adam Glinski");
+      delay (2000);
+    lcd.clear();
+}
 
+void loop()
+{
+
+  
+//  Odczyt Temperatury T1 - Temp.Wew
+  
+  T1 = analogRead(Pin_t_wew);
+  V_T1 = (T1 * 5.0)/1024;
+  mV_T1 = V_T1 * 1000;
+  temp_wew =  (mV_T1-500)/10 ; 
+
+//  Odczyt Temperatury T2 - Temp.Zew
+  
+  T2 = analogRead(Pin_t_zew);
+  V_T2 = (T2 * 5.0)/1024;
+  mV_T2 = V_T2 * 1000;
+  temp_zew =  (mV_T2-500)/10 ; 
+
+//  Odczyt Temperatury T3 - Temp.Piec
+  
+  T3 = analogRead(Pin_t_piec);
+  V_T3 = (T3 * 5.0)/1024;
+  mV_T3 = V_T3 * 1000;
+  temp_piec =  (mV_T3-500)/10 ; 
+
+ 
+  
+//  Zmiana Temperatury Zadanej
+   
+  p_up= digitalRead(Pin_p_up);
+  p_down= digitalRead(Pin_p_down);
+  
+  if (p_up==1){temp_set=temp_set + 1;}  
+  if (p_down==1)temp_set=temp_set - 1;  
+
+   if(p_up==1 || p_down==1){
     
+      lcd.clear();
+      lcd.setCursor(1,0);
+      lcd.print("T.Zad: ");
+        lcd.setCursor(8,0);
+      lcd.print(temp_set);
+      lcd.print((char)0);            //wyświetl znak o numerze 0
+      lcd.print("C");
+    
+   delay(500);
+    
+  }else{
+             
+      lcd.setCursor(1,0);
+      lcd.print("T.Wew:");
+      lcd.setCursor(8,0);
+      lcd.print(temp_wew);
+      lcd.print((char)0);
+      lcd.print("C");
+      lcd.setCursor(1,1);
+      lcd.print("T.Zew: ");
+      lcd.setCursor(8,1);
+      lcd.print(temp_zew);
+      lcd.print((char)0);            //wyświetl znak o numerze 0
+      lcd.print("C");
+    
+    
+  }
+    
+  delay(500);
+ 
 
-  
-    }
 
-//petla glowna
-void loop() {  
+if (temp_set < temp_wew){
+    digitalWrite(Pin_Wentylator, HIGH);
+    digitalWrite(Pin_Swieca, HIGH);
+  delay(100);
+  }else{
+    digitalWrite(Pin_Wentylator, LOW);
+    digitalWrite(Pin_Swieca, LOW);       
+      }
 
-  pomiar_temp();
 }
