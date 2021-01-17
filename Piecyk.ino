@@ -13,8 +13,9 @@
  */
 
 // ******* biblioteki ************
-#include <LiquidCrystal.h>
+//#include <LiquidCrystal.h>
 #include <OneWire.h>
+#include <DallasTemperature.h>
 
 // **** wejscia wyjscia **********
 #define setpoint_key_up 8
@@ -24,13 +25,17 @@
 #define drv_pompa 12
 #define drv_wentylator 11
 
+static int sens_wew = 7;
+
 // ********* zmienne *************
 int status_pracy = 0;           // 0 - stop, 1 - rozruch, 2 - normalna praca, 3 - zatrzymywanie
 int zaplon = 0;
 int wentylator = 0;
 int pompa_paliwa = 0;         
 
+
 float setpoint = 21.0;
+float Twew = 0.0;
 float Tzew = 15.0;
 float dTSTART = 5.0;
 float Tuchyb = 0.0;
@@ -44,18 +49,25 @@ unsigned long time_to_show_data = 0;
 unsigned long time_to_get_data = 0;
 unsigned long sequece_timer = 0;
 
+//inicjalizacja bibliotek OneWire i Dallas temp
+OneWire oneWire(7);
+DallasTemperature sensors(&oneWire);
+
+
 // ********* funkcje ***********
 void lcd(){
   Serial.print("SetPoint: ");
   Serial.println(setpoint);
   Serial.print("Status Pracy: ");
   Serial.println(status_pracy);
- 
+  Serial.print("Temp.Wew: ");
+  Serial.println(Twew);
 }
 
 void get_data(){
-  Tzew = 11.4;  
-  Tuchyb = setpoint - Tzew; //24 - 19 = 5
+     sensors.requestTemperatures();
+     Twew = sensors.getTempCByIndex(0);
+     Tuchyb = setpoint - Tzew; //24 - 19 = 5
 }
 
 void setpoint_plus(){
